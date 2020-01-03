@@ -20,6 +20,8 @@ export default matrix => {
 
   let layer = len;
 
+  const a = "A";
+
   while (layer > 2) {
     rotated[len - layer] = crossAxis(arr, len - layer);
     setCrossAxis(rotated, matrix[1].slice(), layer - 1);
