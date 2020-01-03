@@ -1,0 +1,13 @@
+#field {
+  display: grid;
+  grid-template-columns: repeat(10, 30px);
+  row-gap: 0;
+}
+
+#field > div {
+  height: 30px;
+  border: 1px dotted lightblue;
+}
+
+
+/*# sourceMappingURL=/tetris.e31bb0bc.css.map */

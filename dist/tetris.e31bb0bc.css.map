@@ -1,0 +1,1 @@
+{"version":3,"sources":["src/css/index.css"],"names":[],"mappings":"AAAA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA;AACA","file":"tetris.e31bb0bc.css","sourceRoot":"..","sourcesContent":["#field {\n  display: grid;\n  grid-template-columns: repeat(10, 30px);\n  row-gap: 0;\n}\n\n#field > div {\n  height: 30px;\n  border: 1px dotted lightblue;\n}\n"]}
