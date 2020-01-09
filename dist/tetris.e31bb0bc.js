@@ -176,18 +176,127 @@ function update(newState) {
 
   exports.state = state = newState;
 }
-},{}],"src/js/main.js":[function(require,module,exports) {
+},{}],"src/js/tetrominoes.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.default = void 0;
+var _default = {
+  azure: [[null, null, null, null], [true, true, true, true], [null, null, null, null], [null, null, null, null]],
+  blue: [[true, false, false], [true, true, true], [false, false, false]],
+  orange: [[false, false, true], [true, true, true], [false, false, false]],
+  yellow: [[false, true, true, false], [false, true, true, false], [false, false, false, false], [false, false, false, false]],
+  green: [[false, true, true], [true, true, false], [false, false, false]],
+  red: [[true, true, false], [false, true, true], [false, false, false]],
+  purple: [[false, true, false], [true, true, true], [false, false, false]]
+};
+exports.default = _default;
+},{}],"src/js/rotate.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.rotatedTetro = rotatedTetro;
+
+var _tetrominoes = _interopRequireDefault(require("./tetrominoes"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function rotatedTetro(matrix) {
+  var len = matrix.length;
+  var layers = Math.floor(len / 2);
+  var rotated = [];
+
+  if (len % 2 === 1) {
+    var center = matrix[layers][layers];
+    rotated.push([center]);
+  }
+
+  for (var i = layers - 1; i >= 0; i--) {
+    var layer = getLayer(matrix, i);
+    var layerLen = layer.length;
+    var layerLength = layerLen / 4 + 1;
+    var shift = layerLength - 1;
+    var shiftedArray = shiftArray(layer, shift);
+    insertLayer(shiftedArray, rotated);
+  }
+
+  return rotated;
+}
+
+function getLayer(matrix, n) {
+  var len = matrix.length;
+  var items = len - n * 2;
+  var endItem = n + items - 1;
+  var arr = [];
+
+  for (var i = n; i < items + n; i++) {
+    arr.push(matrix[n][i]);
+  }
+
+  for (var _i = n + 1; _i <= endItem; _i++) {
+    arr.push(matrix[_i][endItem]);
+  }
+
+  for (var _i2 = endItem - 1; _i2 > n; _i2--) {
+    arr.push(matrix[endItem][_i2]);
+  }
+
+  for (var _i3 = endItem; _i3 > n; _i3--) {
+    arr.push(matrix[_i3][n]);
+  }
+
+  return arr;
+}
+
+function shiftArray(arr, shift) {
+  var copy = arr.slice();
+  var n = shift >= 0 ? copy.length - shift : shift * -1;
+  var removed = copy.splice(0, n);
+  return copy.concat(removed);
+}
+
+function insertLayer(layer, matrix) {
+  var len = layer.length;
+  var layerLength = len / 4 + 1;
+  var middle = Math.max(0, layerLength - 2);
+  var bottomLayerStart = layerLength + middle;
+  matrix.unshift(layer.slice(0, layerLength));
+  matrix.push(layer.slice(bottomLayerStart, bottomLayerStart + layerLength).reverse());
+
+  for (var i = 0; i < middle; i++) {
+    matrix[i + 1].push(layer[layerLength + i]);
+    matrix[i + 1].unshift(layer[len - (i + 1)]);
+  }
+}
+},{"./tetrominoes":"src/js/tetrominoes.js"}],"src/js/main.js":[function(require,module,exports) {
 "use strict";
 
 var _createPlayingField = _interopRequireDefault(require("./createPlayingField"));
 
 var _state = require("./state");
 
+var _tetrominoes = _interopRequireDefault(require("./tetrominoes"));
+
+var _rotate = require("./rotate");
+
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
+var azure = _tetrominoes.default.orange;
+console.log(azure);
+var rotated = (0, _rotate.rotatedTetro)(azure);
+var again = (0, _rotate.rotatedTetro)(rotated);
+var again2 = (0, _rotate.rotatedTetro)(again);
+var again3 = (0, _rotate.rotatedTetro)(again2);
+console.log(rotated);
+console.log(again);
+console.log(again2);
+console.log(again3);
 (0, _createPlayingField.default)();
-console.log(_state.state);
-},{"./createPlayingField":"src/js/createPlayingField.js","./state":"src/js/state.js"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{"./createPlayingField":"src/js/createPlayingField.js","./state":"src/js/state.js","./tetrominoes":"src/js/tetrominoes.js","./rotate":"src/js/rotate.js"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -295,7 +404,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58165" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54073" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

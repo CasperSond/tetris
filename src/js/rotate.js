@@ -1,33 +1,74 @@
 import tetrominoes from "./tetrominoes";
 
-function crossAxis(arr, index) {
-  return arr.map(el => el[index]);
-}
-
-function setCrossAxis(mutateArr, newValArr, setIndex) {
-  newValArr.forEach((el, index) => {
-    mutateArr[index][setIndex] = el;
-  });
-
-  return mutateArr;
-}
-
-export default matrix => {
+export function rotatedTetro(matrix) {
   const len = matrix.length;
+  const layers = Math.floor(len / 2);
+  const rotated = [];
 
-  const row = new Array(len).fill(null);
-  const rotated = new Array(len).fill(row);
+  if (len % 2 === 1) {
+    const center = matrix[layers][layers];
+    rotated.push([center]);
+  }
 
-  let layer = len;
+  for (let i = layers - 1; i >= 0; i--) {
+    const layer = getLayer(matrix, i);
+    const layerLen = layer.length;
+    const layerLength = layerLen / 4 + 1;
+    const shift = layerLength - 1;
+    const shiftedArray = shiftArray(layer, shift);
 
-  const a = "A";
-
-  while (layer > 2) {
-    rotated[len - layer] = crossAxis(arr, len - layer);
-    setCrossAxis(rotated, matrix[1].slice(), layer - 1);
-
-    layer--;
+    insertLayer(shiftedArray, rotated);
   }
 
   return rotated;
-};
+}
+
+function getLayer(matrix, n) {
+  const len = matrix.length;
+  const items = len - n * 2;
+  const endItem = n + items - 1;
+  const arr = [];
+  for (let i = n; i < items + n; i++) {
+    arr.push(matrix[n][i]);
+  }
+
+  for (let i = n + 1; i <= endItem; i++) {
+    arr.push(matrix[i][endItem]);
+  }
+
+  for (let i = endItem - 1; i > n; i--) {
+    arr.push(matrix[endItem][i]);
+  }
+
+  for (let i = endItem; i > n; i--) {
+    arr.push(matrix[i][n]);
+  }
+
+  return arr;
+}
+
+function shiftArray(arr, shift) {
+  const copy = arr.slice();
+
+  const n = shift >= 0 ? copy.length - shift : shift * -1;
+  const removed = copy.splice(0, n);
+
+  return copy.concat(removed);
+}
+
+function insertLayer(layer, matrix) {
+  const len = layer.length;
+  const layerLength = len / 4 + 1;
+  const middle = Math.max(0, layerLength - 2);
+  const bottomLayerStart = layerLength + middle;
+
+  matrix.unshift(layer.slice(0, layerLength));
+  matrix.push(
+    layer.slice(bottomLayerStart, bottomLayerStart + layerLength).reverse()
+  );
+
+  for (let i = 0; i < middle; i++) {
+    matrix[i + 1].push(layer[layerLength + i]);
+    matrix[i + 1].unshift(layer[len - (i + 1)]);
+  }
+}
