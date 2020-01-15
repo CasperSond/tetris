@@ -1,6 +1,8 @@
-import tetrominoes from "./tetrominoes";
+export function rotatedTetro(matrix, rotateNumber = 0) {
+  if (rotateNumber === 0) return matrix;
 
-export function rotatedTetro(matrix) {
+  rotateNumber = rotateNumber % 4;
+
   const len = matrix.length;
   const layers = Math.floor(len / 2);
   const rotated = [];
@@ -15,7 +17,7 @@ export function rotatedTetro(matrix) {
     const layerLen = layer.length;
     const layerLength = layerLen / 4 + 1;
     const shift = layerLength - 1;
-    const shiftedArray = shiftArray(layer, shift);
+    const shiftedArray = shiftArray(layer, shift * rotateNumber);
 
     insertLayer(shiftedArray, rotated);
   }

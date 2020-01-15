@@ -128,53 +128,29 @@ exports.default = void 0;
 var _default = function _default() {
   var field = document.getElementById("field");
 
-  for (var i = 0; i < 220; i++) {
-    var element = document.createElement("div");
-    element.setAttribute("id", "id_".concat(i));
-    field.appendChild(element);
+  for (var i = 0; i < 20; i++) {
+    var rowElement = document.createElement("div");
+    field.appendChild(rowElement);
+
+    for (var j = 0; j < 10; j++) {
+      var columnElement = document.createElement("div");
+      rowElement.appendChild(columnElement);
+    }
   }
 };
 
 exports.default = _default;
-},{}],"src/js/state.js":[function(require,module,exports) {
+},{}],"src/js/helpers.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
-exports.update = update;
-exports.state = void 0;
-var column = new Array(10).fill(null);
-var state = new Array(22).fill(column.slice());
-exports.state = state;
-var map = {
-  azure: "azure",
-  yellow: "yellow",
-  blue: "blue",
-  orange: "orange",
-  green: "green",
-  red: "red"
-};
+exports.random = random;
 
-function updateView(id, key) {
-  var block = document.getElementById("id_".concat(id));
-  block.style.background = map[key];
-}
-
-function update(newState) {
-  for (var i = 0; i < 220; i++) {
-    var row = Math.floor(i / 22);
-
-    var _column = i % 10;
-
-    var newValue = newState[row][_column];
-
-    if (newValue !== state[row][_column]) {
-      updateView(i, newValue);
-    }
-  }
-
-  exports.state = state = newState;
+function random(from, to) {
+  var range = Math.floor(Math.random() * (to - from + 1));
+  return range + from;
 }
 },{}],"src/js/tetrominoes.js":[function(require,module,exports) {
 "use strict";
@@ -183,15 +159,7 @@ Object.defineProperty(exports, "__esModule", {
   value: true
 });
 exports.default = void 0;
-var _default = {
-  azure: [[null, null, null, null], [true, true, true, true], [null, null, null, null], [null, null, null, null]],
-  blue: [[true, false, false], [true, true, true], [false, false, false]],
-  orange: [[false, false, true], [true, true, true], [false, false, false]],
-  yellow: [[false, true, true, false], [false, true, true, false], [false, false, false, false], [false, false, false, false]],
-  green: [[false, true, true], [true, true, false], [false, false, false]],
-  red: [[true, true, false], [false, true, true], [false, false, false]],
-  purple: [[false, true, false], [true, true, true], [false, false, false]]
-};
+var _default = [[[null, null, null, null], [true, true, true, true], [null, null, null, null], [null, null, null, null]], [[true, false, false], [true, true, true], [false, false, false]], [[false, false, true], [true, true, true], [false, false, false]], [[false, true, true, false], [false, true, true, false], [false, false, false, false], [false, false, false, false]], [[false, true, true], [true, true, false], [false, false, false]], [[true, true, false], [false, true, true], [false, false, false]], [[false, true, false], [true, true, true], [false, false, false]]];
 exports.default = _default;
 },{}],"src/js/rotate.js":[function(require,module,exports) {
 "use strict";
@@ -201,11 +169,10 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.rotatedTetro = rotatedTetro;
 
-var _tetrominoes = _interopRequireDefault(require("./tetrominoes"));
-
-function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-
 function rotatedTetro(matrix) {
+  var rotateNumber = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 0;
+  if (rotateNumber === 0) return matrix;
+  rotateNumber = rotateNumber % 4;
   var len = matrix.length;
   var layers = Math.floor(len / 2);
   var rotated = [];
@@ -220,7 +187,7 @@ function rotatedTetro(matrix) {
     var layerLen = layer.length;
     var layerLength = layerLen / 4 + 1;
     var shift = layerLength - 1;
-    var shiftedArray = shiftArray(layer, shift);
+    var shiftedArray = shiftArray(layer, shift * rotateNumber);
     insertLayer(shiftedArray, rotated);
   }
 
@@ -272,12 +239,13 @@ function insertLayer(layer, matrix) {
     matrix[i + 1].unshift(layer[len - (i + 1)]);
   }
 }
-},{"./tetrominoes":"src/js/tetrominoes.js"}],"src/js/main.js":[function(require,module,exports) {
+},{}],"src/js/getCurrentPositionOfTetromino.js":[function(require,module,exports) {
 "use strict";
 
-var _createPlayingField = _interopRequireDefault(require("./createPlayingField"));
-
-var _state = require("./state");
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.getCurrentPositionOfTetromino = getCurrentPositionOfTetromino;
 
 var _tetrominoes = _interopRequireDefault(require("./tetrominoes"));
 
@@ -285,18 +253,354 @@ var _rotate = require("./rotate");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
-var azure = _tetrominoes.default.orange;
-console.log(azure);
-var rotated = (0, _rotate.rotatedTetro)(azure);
-var again = (0, _rotate.rotatedTetro)(rotated);
-var again2 = (0, _rotate.rotatedTetro)(again);
-var again3 = (0, _rotate.rotatedTetro)(again2);
-console.log(rotated);
-console.log(again);
-console.log(again2);
-console.log(again3);
+function getCurrentPositionOfTetromino(liveTetromino) {
+  var tetromino = _tetrominoes.default[liveTetromino.type];
+  var rotated = (0, _rotate.rotatedTetro)(tetromino, liveTetromino.rotationState);
+  return rotated.reduce(function (acc, rowArray, yOffSetIndex) {
+    var columnElements = rowArray.reduce(function (accColumns, el, xOffSetIndex) {
+      if (el === true) {
+        var translatedPosition = [liveTetromino.topLeftRef[0] + xOffSetIndex, liveTetromino.topLeftRef[1] + yOffSetIndex];
+        accColumns.push(translatedPosition);
+      }
+
+      return accColumns;
+    }, []);
+    return acc.concat(columnElements);
+  }, []);
+}
+},{"./tetrominoes":"src/js/tetrominoes.js","./rotate":"src/js/rotate.js"}],"src/js/upDateScene.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.startGame = startGame;
+exports.rotateTetromino = rotateTetromino;
+exports.dropNewTetromino = dropNewTetromino;
+exports.moveTetromino = moveTetromino;
+exports.pauseGame = pauseGame;
+exports.liveTetrominoState = exports.mainState = void 0;
+
+var _helpers = require("./helpers");
+
+var _getCurrentPositionOfTetromino = require("./getCurrentPositionOfTetromino");
+
+var _rotate = require("./rotate");
+
+var _tetrominoes = _interopRequireDefault(require("./tetrominoes"));
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+function ownKeys(object, enumerableOnly) { var keys = Object.keys(object); if (Object.getOwnPropertySymbols) { var symbols = Object.getOwnPropertySymbols(object); if (enumerableOnly) symbols = symbols.filter(function (sym) { return Object.getOwnPropertyDescriptor(object, sym).enumerable; }); keys.push.apply(keys, symbols); } return keys; }
+
+function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { var source = arguments[i] != null ? arguments[i] : {}; if (i % 2) { ownKeys(Object(source), true).forEach(function (key) { _defineProperty(target, key, source[key]); }); } else if (Object.getOwnPropertyDescriptors) { Object.defineProperties(target, Object.getOwnPropertyDescriptors(source)); } else { ownKeys(Object(source)).forEach(function (key) { Object.defineProperty(target, key, Object.getOwnPropertyDescriptor(source, key)); }); } } return target; }
+
+function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
+
+var gameState = {
+  running: false,
+  level: 3,
+  nextTick: 0
+};
+var mainState = [];
+exports.mainState = mainState;
+
+(function mainStateInit() {
+  for (var i = 0; i < 20; i++) {
+    mainState.push(new Array(10).fill(null));
+  }
+})();
+
+var liveTetrominoState = {
+  topLeftRef: [0, 0],
+  rotationState: 0,
+  position: [],
+  type: 0
+};
+exports.liveTetrominoState = liveTetrominoState;
+
+function startGame() {
+  gameState.running = true;
+  dropNewTetromino();
+  clockState();
+}
+
+function rotateTetromino() {
+  var ref = liveTetrominoState.topLeftRef;
+  var oldPosition = liveTetrominoState.position.slice();
+  var position = (0, _getCurrentPositionOfTetromino.getCurrentPositionOfTetromino)(_objectSpread({}, liveTetrominoState, {}, {
+    rotationState: (liveTetrominoState.rotationState + 1) % 4
+  })); // if outside try move in
+  // check collision (and then try to move it + or - 1 - 2 ... offset it ... )
+
+  var offset = needToOffSet(position);
+
+  if (offset !== 0) {
+    position = position.map(function (_ref) {
+      var _ref2 = _slicedToArray(_ref, 2),
+          x = _ref2[0],
+          y = _ref2[1];
+
+      return [x + offset, y];
+    });
+  }
+
+  var colliding = isColliding(position);
+
+  if (!colliding) {
+    liveTetrominoState.rotationState = ++liveTetrominoState.rotationState;
+    liveTetrominoState.position = position;
+    gameState.nextTick += 200;
+    renderTetrominoMove(position, oldPosition);
+  }
+}
+
+function dropNewTetromino() {
+  gameState.nextTick = performance.now() + 1000 / gameState.level;
+  gameState.running = true;
+  liveTetrominoState.type = (0, _helpers.random)(0, 6);
+  liveTetrominoState.topLeftRef = [3, 0];
+  liveTetrominoState.rotationState = 0;
+  liveTetrominoState.position = (0, _getCurrentPositionOfTetromino.getCurrentPositionOfTetromino)(liveTetrominoState);
+  renderTetrominoMove(liveTetrominoState.position);
+}
+
+function moveTetromino(_ref3) {
+  var _ref4 = _slicedToArray(_ref3, 2),
+      difX = _ref4[0],
+      difY = _ref4[1];
+
+  var legit = true;
+  var reachedBottom = false;
+  var collision = false;
+  var newPosition = liveTetrominoState.position.map(function (_ref5) {
+    var _ref6 = _slicedToArray(_ref5, 2),
+        xPos = _ref6[0],
+        yPos = _ref6[1];
+
+    var newCoor = [xPos + difX, yPos + difY];
+
+    if (newCoor[0] < 0 || newCoor[0] > 9) {
+      // tetromino at edge attempting to move outside
+      legit = false;
+    } else {
+      // a legit move
+      if (newCoor[1] < 20 && mainState[newCoor[1]][newCoor[0]] !== null) {
+        // collision happens
+        if (difY !== 0) {
+          // move down
+          collision = true;
+        } else {
+          // move left or right
+          legit = false;
+        }
+      }
+    }
+
+    if (newCoor[1] > 19) {
+      legit = false;
+      reachedBottom = true;
+    }
+
+    return newCoor;
+  });
+
+  if (reachedBottom || collision) {
+    addToState(liveTetrominoState);
+    var filled = checkFilledRows();
+    console.log(filled);
+
+    if (filled.length > 0) {
+      filled.forEach(function (el) {
+        mainState.splice(el, 1);
+        mainState.unshift(new Array(10).fill(null));
+        removeAndRow(el);
+      });
+    }
+
+    dropNewTetromino();
+  }
+
+  if (legit && !collision) {
+    var oldPosition = liveTetrominoState.position.slice();
+    liveTetrominoState.position = newPosition;
+
+    var _liveTetrominoState$t = _slicedToArray(liveTetrominoState.topLeftRef, 2),
+        xRef = _liveTetrominoState$t[0],
+        yRef = _liveTetrominoState$t[1];
+
+    liveTetrominoState.topLeftRef = [xRef + difX, yRef + difY];
+    renderTetrominoMove(newPosition, oldPosition);
+
+    if (difX !== 0) {
+      gameState.nextTick += 50;
+    }
+  }
+}
+
+var field = document.getElementById("field");
+
+function needToOffSet(positions) {
+  var highest = positions.reduce(function (acc, _ref7) {
+    var _ref8 = _slicedToArray(_ref7, 2),
+        x = _ref8[0],
+        y = _ref8[1];
+
+    return Math.max(x, acc);
+  }, 0);
+  if (highest > 9) return 9 - highest;
+  var lowest = positions.reduce(function (acc, _ref9) {
+    var _ref10 = _slicedToArray(_ref9, 2),
+        x = _ref10[0],
+        y = _ref10[1];
+
+    return Math.min(x, acc);
+  }, 10);
+  if (lowest < 0) return lowest * -1;
+  return 0;
+}
+
+function accessPosInDom(_ref11, type) {
+  var _ref12 = _slicedToArray(_ref11, 2),
+      x = _ref12[0],
+      y = _ref12[1];
+
+  var row = field.children.item(y);
+  var el = row.children.item(x);
+
+  if (type === -1) {
+    el.style.background = "black";
+  } else {
+    var colors = ["rgb(97,197,235)", "rgb(91, 102, 168)", "rgb(225, 127, 58)", "rgb(242, 211, 73)", "rgb(101, 179, 82)", "rgb(221, 58, 53)", "rgb(161, 84, 153)"];
+    el.style.background = colors[liveTetrominoState.type];
+  }
+}
+
+function renderTetrominoMove(newPos, removeOld) {
+  if (removeOld) {
+    removeOld.forEach(function (el) {
+      accessPosInDom(el, -1);
+    });
+  }
+
+  newPos.forEach(function (el) {
+    accessPosInDom(el, liveTetrominoState.type);
+  });
+}
+
+function pauseGame() {
+  // set time to next tick
+  gameState.running = !gameState.running;
+
+  if (gameState.running) {
+    clockState();
+  }
+}
+
+function removeAndRow(index) {
+  var row = field.children.item(index).remove();
+  var rowElement = document.createElement("div");
+
+  for (var j = 0; j < 10; j++) {
+    var columnElement = document.createElement("div");
+    rowElement.appendChild(columnElement);
+  }
+
+  field.prepend(rowElement);
+}
+
+function addToState(_ref13) {
+  var position = _ref13.position,
+      type = _ref13.type;
+  position.forEach(function (_ref14) {
+    var _ref15 = _slicedToArray(_ref14, 2),
+        x = _ref15[0],
+        y = _ref15[1];
+
+    mainState[y][x] = type;
+  });
+}
+
+function isColliding(positions) {
+  return positions.every(function (_ref16) {
+    var _ref17 = _slicedToArray(_ref16, 2),
+        x = _ref17[0],
+        y = _ref17[1];
+
+    return mainState[y][x];
+  });
+}
+
+function checkFilledRows() {
+  return mainState.reduce(function (acc, row, index) {
+    var rowFull = row.every(function (el) {
+      return el !== null;
+    });
+
+    if (rowFull) {
+      acc.push(index);
+    }
+
+    return acc;
+  }, []);
+}
+
+function clockState() {
+  if (performance.now() >= gameState.nextTick) {
+    moveTetromino([0, 1]);
+    gameState.nextTick = performance.now() + 1000 / gameState.level;
+  }
+
+  if (gameState.running) {
+    requestAnimationFrame(clockState);
+  }
+}
+},{"./helpers":"src/js/helpers.js","./getCurrentPositionOfTetromino":"src/js/getCurrentPositionOfTetromino.js","./rotate":"src/js/rotate.js","./tetrominoes":"src/js/tetrominoes.js"}],"src/js/eventHandlers.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.initEventHandlers = initEventHandlers;
+
+var _upDateScene = require("./upDateScene");
+
+function initEventHandlers() {
+  document.addEventListener("keydown", function (e) {
+    if ([37, 39].indexOf(e.which) > -1) {
+      var move = e.which === 37 ? [-1, 0] : [1, 0];
+      (0, _upDateScene.moveTetromino)(move);
+    } else if (e.which === 38) {
+      (0, _upDateScene.rotateTetromino)();
+    } else if (e.which === 40) {
+      (0, _upDateScene.moveTetromino)([0, 1]);
+    }
+  });
+  var start = document.getElementById("startGame");
+  var pause = document.getElementById("pauseGame");
+  start.addEventListener("click", _upDateScene.startGame);
+  pause.addEventListener("click", _upDateScene.pauseGame);
+}
+},{"./upDateScene":"src/js/upDateScene.js"}],"src/js/main.js":[function(require,module,exports) {
+"use strict";
+
+var _createPlayingField = _interopRequireDefault(require("./createPlayingField"));
+
+var _eventHandlers = require("./eventHandlers");
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
+
 (0, _createPlayingField.default)();
-},{"./createPlayingField":"src/js/createPlayingField.js","./state":"src/js/state.js","./tetrominoes":"src/js/tetrominoes.js","./rotate":"src/js/rotate.js"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+(0, _eventHandlers.initEventHandlers)();
+},{"./createPlayingField":"src/js/createPlayingField.js","./eventHandlers":"src/js/eventHandlers.js"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -404,7 +708,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "54073" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51552" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

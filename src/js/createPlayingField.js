@@ -1,9 +1,13 @@
 export default () => {
   const field = document.getElementById("field");
 
-  for (let i = 0; i < 220; i++) {
-    const element = document.createElement("div");
-    element.setAttribute("id", `id_${i}`);
-    field.appendChild(element);
+  for (let i = 0; i < 20; i++) {
+    const rowElement = document.createElement("div");
+    field.appendChild(rowElement);
+
+    for (let j = 0; j < 10; j++) {
+      const columnElement = document.createElement("div");
+      rowElement.appendChild(columnElement);
+    }
   }
 };
