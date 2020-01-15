@@ -5,6 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "mocha",
+    "build": "parcel build index.html",
     "serve": "parcel index.html"
   },
   "keywords": [],
@@ -12,5 +13,9 @@
   "license": "ISC",
   "dependencies": {
     "mocha": "^6.2.2"
+  },
+  "devDependencies": {
+    "cssnano": "^4.1.10",
+    "parcel-bundler": "^1.12.4"
   }
 }
