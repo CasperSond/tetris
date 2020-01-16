@@ -1,5 +1,18 @@
+h1 {
+  font-weight: 200;
+  font-size: 80px;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica,
+    Arial, sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol";
+  width: 100%;
+  margin: 0;
+  overflow: hidden;
+}
+
 #field {
-  width: 300px;
+  width: 350px;
   background: black;
 }
 
@@ -8,11 +21,91 @@
 }
 
 #field > div > div {
-  height: 30px;
-  width: 30px;
+  height: 35px;
+  width: 35px;
   border-left: 1px solid gray;
   border-bottom: 1px solid gray;
 }
 
-#field > div > div:nth-child(odd) {
+button {
+  padding: 0.25em 1em;
+  font-size: 1.25em;
+  border-radius: 20px;
+}
+
+.center {
+  display: flex;
+  justify-content: center;
+  margin-top: 2em;
+}
+
+.rotateIt {
+  animation: rotate 45s linear infinite;
+}
+
+@keyframes rotate {
+  from {
+    transform: rotate(0deg);
+  }
+
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.corner {
+  position: absolute;
+  top: 0.55em;
+  left: -0.25em;
+  transform: rotate(-45deg);
+}
+
+.relative {
+  position: relative;
+}
+
+.circle {
+  position: absolute;
+  right: -200px;
+  top: 0px;
+  width: 400px;
+  z-index: -1;
+}
+
+.controls {
+  position: absolute;
+  top: 300px;
+  right: -175px;
+}
+
+.btn1 {
+  transform: rotate(25deg);
+  position: absolute;
+  top: 0.35em;
+  right: -5.45em;
+}
+
+.btn2 {
+  transform: rotate(-25deg);
+  position: absolute;
+  top: 18.15em;
+  right: -5.45em;
+}
+
+.score {
+  position: absolute;
+  top: 150px;
+  right: -160px;
+  width: 140px;
+  color: white;
+  font-size: 1.5em;
+  font-weight: 200;
+}
+
+.triangle {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 200px;
+  height: 200px;
 }

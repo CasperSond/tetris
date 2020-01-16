@@ -1,12 +1,14 @@
 import { random } from "./helpers";
 import { getCurrentPositionOfTetromino } from "./getCurrentPositionOfTetromino";
-import { rotatedTetro } from "./rotate";
-import tetrominoesForm from "./tetrominoes";
+import clearPlayingField from "./createPlayingField";
 
 const gameState = {
   running: false,
   level: 3,
-  nextTick: 0
+  nextTick: 0,
+  points: 0,
+  lines: 0,
+  play: false
 };
 
 export const mainState = [];
@@ -25,13 +27,19 @@ export const liveTetrominoState = {
 };
 
 export function startGame() {
-  gameState.running = true;
+  gameState.running = gameState.play = true;
+  gameState.level = 1;
+  gameState.points = 0;
+  gameState.nextTick = performance.now() + 1000;
+  renderNewGameState();
   dropNewTetromino();
+  clearPlayingField();
   clockState();
+  renderButton();
 }
 
 export function rotateTetromino() {
-  const ref = liveTetrominoState.topLeftRef;
+  if (!gameState.running) return;
   const oldPosition = liveTetrominoState.position.slice();
   let position = getCurrentPositionOfTetromino({
     ...liveTetrominoState,
@@ -71,10 +79,16 @@ export function dropNewTetromino() {
     liveTetrominoState
   );
 
-  renderTetrominoMove(liveTetrominoState.position);
+  if (isColliding(liveTetrominoState.position)) {
+    gameover();
+  } else {
+    renderTetrominoMove(liveTetrominoState.position);
+  }
 }
 
 export function moveTetromino([difX, difY]) {
+  if (!gameState.running) return;
+
   let legit = true;
   let reachedBottom = false;
   let collision = false;
@@ -111,17 +125,21 @@ export function moveTetromino([difX, difY]) {
   if (reachedBottom || collision) {
     addToState(liveTetrominoState);
     const filled = checkFilledRows();
-    console.log(filled);
+    gameState.points = gameState.points + gameState.level * 15;
 
     if (filled.length > 0) {
       filled.forEach(el => {
         mainState.splice(el, 1);
         mainState.unshift(new Array(10).fill(null));
+        gameState.points =
+          gameState.points + gameState.level * filled.length * 100;
+        gameState.lines = gameState.lines + filled.length;
 
         removeAndRow(el);
       });
     }
 
+    renderNewGameState();
     dropNewTetromino();
   }
 
@@ -177,6 +195,37 @@ function accessPosInDom([x, y], type) {
   }
 }
 
+const points = document.getElementById("points");
+const lines = document.getElementById("lines");
+const level = document.getElementById("level");
+const refButtonPause = document.getElementById("pauseGame");
+const startGameBtn = document.getElementById("startGame");
+
+function renderNewGameState() {
+  points.innerText = gameState.points;
+  lines.innerText = gameState.lines;
+  level.innerText = gameState.level;
+}
+
+function renderButton() {
+  if (gameState.play) {
+    const text = gameState.running ? "pause" : "resume";
+    refButtonPause.innerText = text;
+    refButtonPause.style.display = "block";
+    startGameBtn.innerText = "restart";
+  } else {
+    refButtonPause.style.display = "none";
+    startGameBtn.innerText = "start";
+  }
+}
+
+renderNewGameState();
+
+function gameover() {
+  console.log("gameover");
+  gameState.running = gameState.play = false;
+}
+
 function renderTetrominoMove(newPos, removeOld) {
   if (removeOld) {
     removeOld.forEach(el => {
@@ -191,6 +240,7 @@ function renderTetrominoMove(newPos, removeOld) {
 export function pauseGame() {
   // set time to next tick
   gameState.running = !gameState.running;
+  renderButton();
 
   if (gameState.running) {
     clockState();
@@ -232,6 +282,16 @@ function checkFilledRows() {
 
     return acc;
   }, []);
+}
+
+function clearState() {
+  mainState.forEach(row => {
+    row.forEach(el => {
+      el = null;
+    });
+  });
+
+  clearPlayingField();
 }
 
 function clockState() {

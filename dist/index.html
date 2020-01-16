@@ -1,1 +1,34 @@
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><meta http-equiv="X-UA-Compatible" content="ie=edge"><title>Document</title><link rel="stylesheet" href="/tetris.7b4c06f1.css"></head><body> <h1>Tetris</h1> <button id="startGame">Start</button> <button id="pauseGame">Pause</button> <div id="field"></div> <script src="/tetris.ccbcdaaa.js"></script> </body></html>
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>The blocks</title>
+  <link rel="stylesheet" href="/tetris.e31bb0bc.css"></head>
+  <body>
+    <h1 class="corner">The blocks</h1>
+    <svg viewBox="0 0 100 100" class="triangle">
+      <path d="M0 0 L0 100 L100 0 Z" fill="#0E4D92" stroke="#0E4D92">
+    </path></svg>
+    <div class="center">
+      <div class="relative">
+        <svg viewBox="0 0 100 100" class="circle">
+          <circle cy="50" cx="50" r="50" fill="#0E4D92"></circle>
+        </svg>
+        
+          <button id="startGame" class="btn1">Start</button>
+          <button id="pauseGame" class="btn2" style="display: none;">Pause</button>
+        
+        <div class="score">
+          <div>Points: <span id="points"></span></div>
+          <div>Lines: <span id="lines"></span></div>
+          <div>Level: <span id="level"></span></div>
+        </div>
+        <div id="field"></div>
+      </div>
+    </div>
+
+    <script src="/tetris.e31bb0bc.js"></script>
+  </body>
+</html>

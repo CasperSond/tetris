@@ -128,6 +128,10 @@ exports.default = void 0;
 var _default = function _default() {
   var field = document.getElementById("field");
 
+  while (field.firstChild) {
+    field.removeChild(field.firstChild);
+  }
+
   for (var i = 0; i < 20; i++) {
     var rowElement = document.createElement("div");
     field.appendChild(rowElement);
@@ -285,9 +289,7 @@ var _helpers = require("./helpers");
 
 var _getCurrentPositionOfTetromino = require("./getCurrentPositionOfTetromino");
 
-var _rotate = require("./rotate");
-
-var _tetrominoes = _interopRequireDefault(require("./tetrominoes"));
+var _createPlayingField = _interopRequireDefault(require("./createPlayingField"));
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -308,7 +310,10 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 var gameState = {
   running: false,
   level: 3,
-  nextTick: 0
+  nextTick: 0,
+  points: 0,
+  lines: 0,
+  play: false
 };
 var mainState = [];
 exports.mainState = mainState;
@@ -328,13 +333,19 @@ var liveTetrominoState = {
 exports.liveTetrominoState = liveTetrominoState;
 
 function startGame() {
-  gameState.running = true;
+  gameState.running = gameState.play = true;
+  gameState.level = 1;
+  gameState.points = 0;
+  gameState.nextTick = performance.now() + 1000;
+  renderNewGameState();
   dropNewTetromino();
+  (0, _createPlayingField.default)();
   clockState();
+  renderButton();
 }
 
 function rotateTetromino() {
-  var ref = liveTetrominoState.topLeftRef;
+  if (!gameState.running) return;
   var oldPosition = liveTetrominoState.position.slice();
   var position = (0, _getCurrentPositionOfTetromino.getCurrentPositionOfTetromino)(_objectSpread({}, liveTetrominoState, {}, {
     rotationState: (liveTetrominoState.rotationState + 1) % 4
@@ -370,7 +381,12 @@ function dropNewTetromino() {
   liveTetrominoState.topLeftRef = [3, 0];
   liveTetrominoState.rotationState = 0;
   liveTetrominoState.position = (0, _getCurrentPositionOfTetromino.getCurrentPositionOfTetromino)(liveTetrominoState);
-  renderTetrominoMove(liveTetrominoState.position);
+
+  if (isColliding(liveTetrominoState.position)) {
+    gameover();
+  } else {
+    renderTetrominoMove(liveTetrominoState.position);
+  }
 }
 
 function moveTetromino(_ref3) {
@@ -378,6 +394,7 @@ function moveTetromino(_ref3) {
       difX = _ref4[0],
       difY = _ref4[1];
 
+  if (!gameState.running) return;
   var legit = true;
   var reachedBottom = false;
   var collision = false;
@@ -416,16 +433,19 @@ function moveTetromino(_ref3) {
   if (reachedBottom || collision) {
     addToState(liveTetrominoState);
     var filled = checkFilledRows();
-    console.log(filled);
+    gameState.points = gameState.points + gameState.level * 15;
 
     if (filled.length > 0) {
       filled.forEach(function (el) {
         mainState.splice(el, 1);
         mainState.unshift(new Array(10).fill(null));
+        gameState.points = gameState.points + gameState.level * filled.length * 100;
+        gameState.lines = gameState.lines + filled.length;
         removeAndRow(el);
       });
     }
 
+    renderNewGameState();
     dropNewTetromino();
   }
 
@@ -484,6 +504,37 @@ function accessPosInDom(_ref11, type) {
   }
 }
 
+var points = document.getElementById("points");
+var lines = document.getElementById("lines");
+var level = document.getElementById("level");
+var refButtonPause = document.getElementById("pauseGame");
+var startGameBtn = document.getElementById("startGame");
+
+function renderNewGameState() {
+  points.innerText = gameState.points;
+  lines.innerText = gameState.lines;
+  level.innerText = gameState.level;
+}
+
+function renderButton() {
+  if (gameState.play) {
+    var text = gameState.running ? "pause" : "resume";
+    refButtonPause.innerText = text;
+    refButtonPause.style.display = "block";
+    startGameBtn.innerText = "restart";
+  } else {
+    refButtonPause.style.display = "none";
+    startGameBtn.innerText = "start";
+  }
+}
+
+renderNewGameState();
+
+function gameover() {
+  console.log("gameover");
+  gameState.running = gameState.play = false;
+}
+
 function renderTetrominoMove(newPos, removeOld) {
   if (removeOld) {
     removeOld.forEach(function (el) {
@@ -499,6 +550,7 @@ function renderTetrominoMove(newPos, removeOld) {
 function pauseGame() {
   // set time to next tick
   gameState.running = !gameState.running;
+  renderButton();
 
   if (gameState.running) {
     clockState();
@@ -553,6 +605,15 @@ function checkFilledRows() {
   }, []);
 }
 
+function clearState() {
+  mainState.forEach(function (row) {
+    row.forEach(function (el) {
+      el = null;
+    });
+  });
+  (0, _createPlayingField.default)();
+}
+
 function clockState() {
   if (performance.now() >= gameState.nextTick) {
     moveTetromino([0, 1]);
@@ -563,7 +624,7 @@ function clockState() {
     requestAnimationFrame(clockState);
   }
 }
-},{"./helpers":"src/js/helpers.js","./getCurrentPositionOfTetromino":"src/js/getCurrentPositionOfTetromino.js","./rotate":"src/js/rotate.js","./tetrominoes":"src/js/tetrominoes.js"}],"src/js/eventHandlers.js":[function(require,module,exports) {
+},{"./helpers":"src/js/helpers.js","./getCurrentPositionOfTetromino":"src/js/getCurrentPositionOfTetromino.js","./createPlayingField":"src/js/createPlayingField.js"}],"src/js/eventHandlers.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -600,7 +661,7 @@ function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { de
 
 (0, _createPlayingField.default)();
 (0, _eventHandlers.initEventHandlers)();
-},{"./createPlayingField":"src/js/createPlayingField.js","./eventHandlers":"src/js/eventHandlers.js"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
+},{"./createPlayingField":"src/js/createPlayingField.js","./eventHandlers":"src/js/eventHandlers.js"}],"node_modules/parcel-bundler/src/builtins/bundle-url.js":[function(require,module,exports) {
 var bundleURL = null;
 
 function getBundleURLCached() {
@@ -632,7 +693,7 @@ function getBaseURL(url) {
 
 exports.getBundleURL = getBundleURLCached;
 exports.getBaseURL = getBaseURL;
-},{}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
+},{}],"node_modules/parcel-bundler/src/builtins/css-loader.js":[function(require,module,exports) {
 var bundle = require('./bundle-url');
 
 function updateLink(link) {
@@ -667,12 +728,12 @@ function reloadCSS() {
 }
 
 module.exports = reloadCSS;
-},{"./bundle-url":"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"src/css/index.css":[function(require,module,exports) {
+},{"./bundle-url":"node_modules/parcel-bundler/src/builtins/bundle-url.js"}],"src/css/index.css":[function(require,module,exports) {
 var reloadCSS = require('_css_loader');
 
 module.hot.dispose(reloadCSS);
 module.hot.accept(reloadCSS);
-},{"_css_loader":"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/css-loader.js"}],"index.js":[function(require,module,exports) {
+},{"_css_loader":"node_modules/parcel-bundler/src/builtins/css-loader.js"}],"index.js":[function(require,module,exports) {
 "use strict";
 
 var _main = _interopRequireDefault(require("./src/js/main"));
@@ -680,7 +741,7 @@ var _main = _interopRequireDefault(require("./src/js/main"));
 require("./src/css/index.css");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
-},{"./src/js/main":"src/js/main.js","./src/css/index.css":"src/css/index.css"}],"../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
+},{"./src/js/main":"src/js/main.js","./src/css/index.css":"src/css/index.css"}],"node_modules/parcel-bundler/src/builtins/hmr-runtime.js":[function(require,module,exports) {
 var global = arguments[3];
 var OVERLAY_ID = '__parcel__error__overlay__';
 var OldModule = module.bundle.Module;
@@ -708,7 +769,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "51552" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60349" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};
@@ -884,5 +945,5 @@ function hmrAcceptRun(bundle, id) {
     return true;
   }
 }
-},{}]},{},["../../../../usr/local/lib/node_modules/parcel-bundler/src/builtins/hmr-runtime.js","index.js"], null)
+},{}]},{},["node_modules/parcel-bundler/src/builtins/hmr-runtime.js","index.js"], null)
 //# sourceMappingURL=/tetris.e31bb0bc.js.map

@@ -1,6 +1,10 @@
 export default () => {
   const field = document.getElementById("field");
 
+  while (field.firstChild) {
+    field.removeChild(field.firstChild);
+  }
+
   for (let i = 0; i < 20; i++) {
     const rowElement = document.createElement("div");
     field.appendChild(rowElement);
