@@ -110,5 +110,24 @@ button {
   height: 200px;
 }
 
+#gameover {
+  position: absolute;
+  font-size: 75px;
+  color: red;
+  z-index: 2;
+  animation: roll 5s linear infinite;
+  transform: translate(30px);
+}
+
+@keyframes roll {
+  from {
+    transform: translateY(-50vh) translateX(-50%);
+  }
+
+  to {
+    transform: translateY(100vh) translateX(150%);
+  }
+}
+
 
 /*# sourceMappingURL=/tetris.e31bb0bc.css.map */

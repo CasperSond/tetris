@@ -109,3 +109,22 @@ button {
   width: 200px;
   height: 200px;
 }
+
+#gameover {
+  position: absolute;
+  font-size: 75px;
+  color: red;
+  z-index: 2;
+  animation: roll 5s linear infinite;
+  transform: translate(30px);
+}
+
+@keyframes roll {
+  from {
+    transform: translateY(-50vh) translateX(-50%);
+  }
+
+  to {
+    transform: translateY(100vh) translateX(150%);
+  }
+}

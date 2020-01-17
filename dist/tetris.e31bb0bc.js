@@ -272,7 +272,87 @@ function getCurrentPositionOfTetromino(liveTetromino) {
     return acc.concat(columnElements);
   }, []);
 }
-},{"./tetrominoes":"src/js/tetrominoes.js","./rotate":"src/js/rotate.js"}],"src/js/upDateScene.js":[function(require,module,exports) {
+},{"./tetrominoes":"src/js/tetrominoes.js","./rotate":"src/js/rotate.js"}],"src/js/renderState.js":[function(require,module,exports) {
+"use strict";
+
+Object.defineProperty(exports, "__esModule", {
+  value: true
+});
+exports.accessPosInDom = accessPosInDom;
+exports.renderNewGameState = renderNewGameState;
+exports.renderButton = renderButton;
+exports.removeAndRow = removeAndRow;
+
+var _gameState = require("./gameState");
+
+function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
+
+function _nonIterableRest() { throw new TypeError("Invalid attempt to destructure non-iterable instance"); }
+
+function _iterableToArrayLimit(arr, i) { if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) { return; } var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"] != null) _i["return"](); } finally { if (_d) throw _e; } } return _arr; }
+
+function _arrayWithHoles(arr) { if (Array.isArray(arr)) return arr; }
+
+var field = document.getElementById("field");
+var points = document.getElementById("points");
+var lines = document.getElementById("lines");
+var level = document.getElementById("level");
+var refButtonPause = document.getElementById("pauseGame");
+var startGameBtn = document.getElementById("startGame");
+var gameover = document.getElementById("gameover");
+
+function accessPosInDom(_ref, type) {
+  var _ref2 = _slicedToArray(_ref, 2),
+      x = _ref2[0],
+      y = _ref2[1];
+
+  var row = field.children.item(y);
+  var el = row.children.item(x);
+
+  if (type === -1) {
+    el.style.background = "black";
+  } else {
+    var colors = ["rgb(97,197,235)", "rgb(91, 102, 168)", "rgb(225, 127, 58)", "rgb(242, 211, 73)", "rgb(101, 179, 82)", "rgb(221, 58, 53)", "rgb(161, 84, 153)"];
+    el.style.background = colors[_gameState.liveTetrominoState.type];
+  }
+}
+
+function renderNewGameState() {
+  points.innerText = _gameState.gameState.points;
+  lines.innerText = _gameState.gameState.lines;
+  level.innerText = _gameState.gameState.level;
+  var gs = _gameState.gameState.gameover ? "block" : "none";
+  gameover.style.display = gs;
+}
+
+function renderButton() {
+  if (_gameState.gameState.play) {
+    var text = _gameState.gameState.running ? "pause" : "resume";
+    refButtonPause.innerText = text;
+    refButtonPause.style.display = "block";
+    startGameBtn.innerText = "restart";
+  } else {
+    refButtonPause.style.display = "none";
+    startGameBtn.innerText = "start";
+  }
+}
+
+function removeAndRow(index) {
+  var row = field.children.item(index).remove();
+  var rowElement = document.createElement("div");
+
+  for (var j = 0; j < 10; j++) {
+    var columnElement = document.createElement("div");
+    rowElement.appendChild(columnElement);
+  }
+
+  field.prepend(rowElement);
+}
+
+window.addEventListener("DOMContentLoaded", function () {
+  renderNewGameState();
+});
+},{"./gameState":"src/js/gameState.js"}],"src/js/gameState.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -283,13 +363,15 @@ exports.rotateTetromino = rotateTetromino;
 exports.dropNewTetromino = dropNewTetromino;
 exports.moveTetromino = moveTetromino;
 exports.pauseGame = pauseGame;
-exports.liveTetrominoState = exports.mainState = void 0;
+exports.liveTetrominoState = exports.gameState = void 0;
 
 var _helpers = require("./helpers");
 
 var _getCurrentPositionOfTetromino = require("./getCurrentPositionOfTetromino");
 
 var _createPlayingField = _interopRequireDefault(require("./createPlayingField"));
+
+var _renderState = require("./renderState");
 
 function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
@@ -307,41 +389,41 @@ function _objectSpread(target) { for (var i = 1; i < arguments.length; i++) { va
 
 function _defineProperty(obj, key, value) { if (key in obj) { Object.defineProperty(obj, key, { value: value, enumerable: true, configurable: true, writable: true }); } else { obj[key] = value; } return obj; }
 
-var gameState = {
-  running: false,
-  level: 3,
-  nextTick: 0,
-  points: 0,
-  lines: 0,
-  play: false
-};
-var mainState = [];
-exports.mainState = mainState;
+// --- GAME STATE SINGLETON objects -----
+var gameState = {};
+exports.gameState = gameState;
+var liveTetrominoState = {}; // -------------------------------------- //
 
-(function mainStateInit() {
-  for (var i = 0; i < 20; i++) {
-    mainState.push(new Array(10).fill(null));
-  }
-})();
-
-var liveTetrominoState = {
-  topLeftRef: [0, 0],
-  rotationState: 0,
-  position: [],
-  type: 0
-};
 exports.liveTetrominoState = liveTetrominoState;
 
-function startGame() {
+function startGame(e) {
   gameState.running = gameState.play = true;
+  gameState.gameover = false;
   gameState.level = 1;
   gameState.points = 0;
+  gameState.lines = 0;
   gameState.nextTick = performance.now() + 1000;
-  renderNewGameState();
-  dropNewTetromino();
-  (0, _createPlayingField.default)();
-  clockState();
-  renderButton();
+  gameState.state = emptyState();
+  e.target.blur();
+  (0, _renderState.renderNewGameState)(); // IU state
+
+  (0, _renderState.renderButton)(); // IU state
+
+  (0, _createPlayingField.default)(); // Dom manipulation
+
+  clockState(); // timer init
+
+  dropNewTetromino(); // drop ...
+}
+
+function emptyState() {
+  var arr = [];
+
+  for (var i = 0; i < 20; i++) {
+    arr.push(new Array(10).fill(null));
+  }
+
+  return arr;
 }
 
 function rotateTetromino() {
@@ -384,9 +466,9 @@ function dropNewTetromino() {
 
   if (isColliding(liveTetrominoState.position)) {
     gameover();
-  } else {
-    renderTetrominoMove(liveTetrominoState.position);
   }
+
+  renderTetrominoMove(liveTetrominoState.position);
 }
 
 function moveTetromino(_ref3) {
@@ -410,7 +492,7 @@ function moveTetromino(_ref3) {
       legit = false;
     } else {
       // a legit move
-      if (newCoor[1] < 20 && mainState[newCoor[1]][newCoor[0]] !== null) {
+      if (newCoor[1] < 20 && gameState.state[newCoor[1]][newCoor[0]] !== null) {
         // collision happens
         if (difY !== 0) {
           // move down
@@ -432,20 +514,21 @@ function moveTetromino(_ref3) {
 
   if (reachedBottom || collision) {
     addToState(liveTetrominoState);
-    var filled = checkFilledRows();
+    var filled = getFullRows();
     gameState.points = gameState.points + gameState.level * 15;
 
     if (filled.length > 0) {
       filled.forEach(function (el) {
-        mainState.splice(el, 1);
-        mainState.unshift(new Array(10).fill(null));
+        gameState.state.splice(el, 1);
+        gameState.state.unshift(new Array(10).fill(null));
         gameState.points = gameState.points + gameState.level * filled.length * 100;
         gameState.lines = gameState.lines + filled.length;
-        removeAndRow(el);
+        (0, _renderState.removeAndRow)(el);
       });
     }
 
-    renderNewGameState();
+    gameState.level = Math.floor(gameState.lines / 10) + 1;
+    (0, _renderState.renderNewGameState)();
     dropNewTetromino();
   }
 
@@ -465,8 +548,6 @@ function moveTetromino(_ref3) {
     }
   }
 }
-
-var field = document.getElementById("field");
 
 function needToOffSet(positions) {
   var highest = positions.reduce(function (acc, _ref7) {
@@ -488,111 +569,58 @@ function needToOffSet(positions) {
   return 0;
 }
 
-function accessPosInDom(_ref11, type) {
-  var _ref12 = _slicedToArray(_ref11, 2),
-      x = _ref12[0],
-      y = _ref12[1];
-
-  var row = field.children.item(y);
-  var el = row.children.item(x);
-
-  if (type === -1) {
-    el.style.background = "black";
-  } else {
-    var colors = ["rgb(97,197,235)", "rgb(91, 102, 168)", "rgb(225, 127, 58)", "rgb(242, 211, 73)", "rgb(101, 179, 82)", "rgb(221, 58, 53)", "rgb(161, 84, 153)"];
-    el.style.background = colors[liveTetrominoState.type];
-  }
-}
-
-var points = document.getElementById("points");
-var lines = document.getElementById("lines");
-var level = document.getElementById("level");
-var refButtonPause = document.getElementById("pauseGame");
-var startGameBtn = document.getElementById("startGame");
-
-function renderNewGameState() {
-  points.innerText = gameState.points;
-  lines.innerText = gameState.lines;
-  level.innerText = gameState.level;
-}
-
-function renderButton() {
-  if (gameState.play) {
-    var text = gameState.running ? "pause" : "resume";
-    refButtonPause.innerText = text;
-    refButtonPause.style.display = "block";
-    startGameBtn.innerText = "restart";
-  } else {
-    refButtonPause.style.display = "none";
-    startGameBtn.innerText = "start";
-  }
-}
-
-renderNewGameState();
-
 function gameover() {
-  console.log("gameover");
   gameState.running = gameState.play = false;
+  gameState.gameover = true;
+  (0, _renderState.renderNewGameState)();
 }
 
 function renderTetrominoMove(newPos, removeOld) {
   if (removeOld) {
     removeOld.forEach(function (el) {
-      accessPosInDom(el, -1);
+      (0, _renderState.accessPosInDom)(el, -1);
     });
   }
 
   newPos.forEach(function (el) {
-    accessPosInDom(el, liveTetrominoState.type);
+    (0, _renderState.accessPosInDom)(el, liveTetrominoState.type);
   });
 }
 
 function pauseGame() {
   // set time to next tick
   gameState.running = !gameState.running;
-  renderButton();
+  (0, _renderState.renderButton)();
 
   if (gameState.running) {
     clockState();
   }
 }
 
-function removeAndRow(index) {
-  var row = field.children.item(index).remove();
-  var rowElement = document.createElement("div");
+function addToState(_ref11) {
+  var position = _ref11.position,
+      type = _ref11.type;
+  position.forEach(function (_ref12) {
+    var _ref13 = _slicedToArray(_ref12, 2),
+        x = _ref13[0],
+        y = _ref13[1];
 
-  for (var j = 0; j < 10; j++) {
-    var columnElement = document.createElement("div");
-    rowElement.appendChild(columnElement);
-  }
-
-  field.prepend(rowElement);
-}
-
-function addToState(_ref13) {
-  var position = _ref13.position,
-      type = _ref13.type;
-  position.forEach(function (_ref14) {
-    var _ref15 = _slicedToArray(_ref14, 2),
-        x = _ref15[0],
-        y = _ref15[1];
-
-    mainState[y][x] = type;
+    gameState.state[y][x] = type;
   });
 }
 
 function isColliding(positions) {
-  return positions.every(function (_ref16) {
-    var _ref17 = _slicedToArray(_ref16, 2),
-        x = _ref17[0],
-        y = _ref17[1];
+  return positions.some(function (_ref14) {
+    var _ref15 = _slicedToArray(_ref14, 2),
+        x = _ref15[0],
+        y = _ref15[1];
 
-    return mainState[y][x];
+    return gameState.state[y][x];
   });
 }
 
-function checkFilledRows() {
-  return mainState.reduce(function (acc, row, index) {
+function getFullRows() {
+  return gameState.state.reduce(function (acc, row, index) {
     var rowFull = row.every(function (el) {
       return el !== null;
     });
@@ -605,15 +633,6 @@ function checkFilledRows() {
   }, []);
 }
 
-function clearState() {
-  mainState.forEach(function (row) {
-    row.forEach(function (el) {
-      el = null;
-    });
-  });
-  (0, _createPlayingField.default)();
-}
-
 function clockState() {
   if (performance.now() >= gameState.nextTick) {
     moveTetromino([0, 1]);
@@ -624,7 +643,7 @@ function clockState() {
     requestAnimationFrame(clockState);
   }
 }
-},{"./helpers":"src/js/helpers.js","./getCurrentPositionOfTetromino":"src/js/getCurrentPositionOfTetromino.js","./createPlayingField":"src/js/createPlayingField.js"}],"src/js/eventHandlers.js":[function(require,module,exports) {
+},{"./helpers":"src/js/helpers.js","./getCurrentPositionOfTetromino":"src/js/getCurrentPositionOfTetromino.js","./createPlayingField":"src/js/createPlayingField.js","./renderState":"src/js/renderState.js"}],"src/js/eventHandlers.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
@@ -632,25 +651,25 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.initEventHandlers = initEventHandlers;
 
-var _upDateScene = require("./upDateScene");
+var _gameState = require("./gameState");
 
 function initEventHandlers() {
   document.addEventListener("keydown", function (e) {
     if ([37, 39].indexOf(e.which) > -1) {
       var move = e.which === 37 ? [-1, 0] : [1, 0];
-      (0, _upDateScene.moveTetromino)(move);
+      (0, _gameState.moveTetromino)(move);
     } else if (e.which === 38) {
-      (0, _upDateScene.rotateTetromino)();
+      (0, _gameState.rotateTetromino)();
     } else if (e.which === 40) {
-      (0, _upDateScene.moveTetromino)([0, 1]);
+      (0, _gameState.moveTetromino)([0, 1]);
     }
   });
   var start = document.getElementById("startGame");
   var pause = document.getElementById("pauseGame");
-  start.addEventListener("click", _upDateScene.startGame);
-  pause.addEventListener("click", _upDateScene.pauseGame);
+  start.addEventListener("click", _gameState.startGame);
+  pause.addEventListener("click", _gameState.pauseGame);
 }
-},{"./upDateScene":"src/js/upDateScene.js"}],"src/js/main.js":[function(require,module,exports) {
+},{"./gameState":"src/js/gameState.js"}],"src/js/main.js":[function(require,module,exports) {
 "use strict";
 
 var _createPlayingField = _interopRequireDefault(require("./createPlayingField"));
@@ -769,7 +788,7 @@ var parent = module.bundle.parent;
 if ((!parent || !parent.isParcelRequire) && typeof WebSocket !== 'undefined') {
   var hostname = "" || location.hostname;
   var protocol = location.protocol === 'https:' ? 'wss' : 'ws';
-  var ws = new WebSocket(protocol + '://' + hostname + ':' + "60349" + '/');
+  var ws = new WebSocket(protocol + '://' + hostname + ':' + "58751" + '/');
 
   ws.onmessage = function (event) {
     checkedAssets = {};

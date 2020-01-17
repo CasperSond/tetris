@@ -1,41 +1,42 @@
 import { random } from "./helpers";
 import { getCurrentPositionOfTetromino } from "./getCurrentPositionOfTetromino";
 import clearPlayingField from "./createPlayingField";
+import {
+  accessPosInDom,
+  renderNewGameState,
+  renderButton,
+  removeAndRow
+} from "./renderState";
 
-const gameState = {
-  running: false,
-  level: 3,
-  nextTick: 0,
-  points: 0,
-  lines: 0,
-  play: false
-};
+// --- GAME STATE SINGLETON objects -----
+export const gameState = {};
+export const liveTetrominoState = {};
+// -------------------------------------- //
 
-export const mainState = [];
-
-(function mainStateInit() {
-  for (let i = 0; i < 20; i++) {
-    mainState.push(new Array(10).fill(null));
-  }
-})();
-
-export const liveTetrominoState = {
-  topLeftRef: [0, 0],
-  rotationState: 0,
-  position: [],
-  type: 0
-};
-
-export function startGame() {
+export function startGame(e) {
   gameState.running = gameState.play = true;
+  gameState.gameover = false;
   gameState.level = 1;
   gameState.points = 0;
+  gameState.lines = 0;
   gameState.nextTick = performance.now() + 1000;
-  renderNewGameState();
-  dropNewTetromino();
-  clearPlayingField();
-  clockState();
-  renderButton();
+  gameState.state = emptyState();
+
+  e.target.blur();
+  renderNewGameState(); // IU state
+  renderButton(); // IU state
+  clearPlayingField(); // Dom manipulation
+  clockState(); // timer init
+  dropNewTetromino(); // drop ...
+}
+
+function emptyState() {
+  const arr = [];
+  for (let i = 0; i < 20; i++) {
+    arr.push(new Array(10).fill(null));
+  }
+
+  return arr;
 }
 
 export function rotateTetromino() {
@@ -81,9 +82,8 @@ export function dropNewTetromino() {
 
   if (isColliding(liveTetrominoState.position)) {
     gameover();
-  } else {
-    renderTetrominoMove(liveTetrominoState.position);
   }
+  renderTetrominoMove(liveTetrominoState.position);
 }
 
 export function moveTetromino([difX, difY]) {
@@ -101,7 +101,7 @@ export function moveTetromino([difX, difY]) {
       legit = false;
     } else {
       // a legit move
-      if (newCoor[1] < 20 && mainState[newCoor[1]][newCoor[0]] !== null) {
+      if (newCoor[1] < 20 && gameState.state[newCoor[1]][newCoor[0]] !== null) {
         // collision happens
 
         if (difY !== 0) {
@@ -124,13 +124,13 @@ export function moveTetromino([difX, difY]) {
 
   if (reachedBottom || collision) {
     addToState(liveTetrominoState);
-    const filled = checkFilledRows();
+    const filled = getFullRows();
     gameState.points = gameState.points + gameState.level * 15;
 
     if (filled.length > 0) {
       filled.forEach(el => {
-        mainState.splice(el, 1);
-        mainState.unshift(new Array(10).fill(null));
+        gameState.state.splice(el, 1);
+        gameState.state.unshift(new Array(10).fill(null));
         gameState.points =
           gameState.points + gameState.level * filled.length * 100;
         gameState.lines = gameState.lines + filled.length;
@@ -138,6 +138,8 @@ export function moveTetromino([difX, difY]) {
         removeAndRow(el);
       });
     }
+
+    gameState.level = Math.floor(gameState.lines / 10) + 1;
 
     renderNewGameState();
     dropNewTetromino();
@@ -157,8 +159,6 @@ export function moveTetromino([difX, difY]) {
   }
 }
 
-const field = document.getElementById("field");
-
 function needToOffSet(positions) {
   const highest = positions.reduce((acc, [x, y]) => {
     return Math.max(x, acc);
@@ -175,55 +175,10 @@ function needToOffSet(positions) {
   return 0;
 }
 
-function accessPosInDom([x, y], type) {
-  const row = field.children.item(y);
-  const el = row.children.item(x);
-
-  if (type === -1) {
-    el.style.background = "black";
-  } else {
-    const colors = [
-      "rgb(97,197,235)",
-      "rgb(91, 102, 168)",
-      "rgb(225, 127, 58)",
-      "rgb(242, 211, 73)",
-      "rgb(101, 179, 82)",
-      "rgb(221, 58, 53)",
-      "rgb(161, 84, 153)"
-    ];
-    el.style.background = colors[liveTetrominoState.type];
-  }
-}
-
-const points = document.getElementById("points");
-const lines = document.getElementById("lines");
-const level = document.getElementById("level");
-const refButtonPause = document.getElementById("pauseGame");
-const startGameBtn = document.getElementById("startGame");
-
-function renderNewGameState() {
-  points.innerText = gameState.points;
-  lines.innerText = gameState.lines;
-  level.innerText = gameState.level;
-}
-
-function renderButton() {
-  if (gameState.play) {
-    const text = gameState.running ? "pause" : "resume";
-    refButtonPause.innerText = text;
-    refButtonPause.style.display = "block";
-    startGameBtn.innerText = "restart";
-  } else {
-    refButtonPause.style.display = "none";
-    startGameBtn.innerText = "start";
-  }
-}
-
-renderNewGameState();
-
 function gameover() {
-  console.log("gameover");
   gameState.running = gameState.play = false;
+  gameState.gameover = true;
+  renderNewGameState();
 }
 
 function renderTetrominoMove(newPos, removeOld) {
@@ -247,31 +202,20 @@ export function pauseGame() {
   }
 }
 
-function removeAndRow(index) {
-  const row = field.children.item(index).remove();
-  const rowElement = document.createElement("div");
-
-  for (let j = 0; j < 10; j++) {
-    const columnElement = document.createElement("div");
-    rowElement.appendChild(columnElement);
-  }
-  field.prepend(rowElement);
-}
-
 function addToState({ position, type }) {
   position.forEach(([x, y]) => {
-    mainState[y][x] = type;
+    gameState.state[y][x] = type;
   });
 }
 
 function isColliding(positions) {
-  return positions.every(([x, y]) => {
-    return mainState[y][x];
+  return positions.some(([x, y]) => {
+    return gameState.state[y][x];
   });
 }
 
-function checkFilledRows() {
-  return mainState.reduce((acc, row, index) => {
+function getFullRows() {
+  return gameState.state.reduce((acc, row, index) => {
     const rowFull = row.every(el => {
       return el !== null;
     });
@@ -282,16 +226,6 @@ function checkFilledRows() {
 
     return acc;
   }, []);
-}
-
-function clearState() {
-  mainState.forEach(row => {
-    row.forEach(el => {
-      el = null;
-    });
-  });
-
-  clearPlayingField();
 }
 
 function clockState() {

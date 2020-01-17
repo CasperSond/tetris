@@ -3,7 +3,7 @@ import {
   pauseGame,
   moveTetromino,
   rotateTetromino
-} from "./upDateScene";
+} from "./gameState";
 
 export function initEventHandlers() {
   document.addEventListener("keydown", e => {
