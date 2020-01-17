@@ -349,8 +349,7 @@ function removeAndRow(index) {
   field.prepend(rowElement);
 }
 
-window.addEventListener("DOMContentLoaded", function () {
-  renderNewGameState();
+window.addEventListener("DOMContentLoaded", function () {// renderNewGameState();
 });
 },{"./gameState":"src/js/gameState.js"}],"src/js/gameState.js":[function(require,module,exports) {
 "use strict";

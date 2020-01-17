@@ -62,5 +62,5 @@ export function removeAndRow(index) {
 }
 
 window.addEventListener("DOMContentLoaded", () => {
-  renderNewGameState();
+  // renderNewGameState();
 });
