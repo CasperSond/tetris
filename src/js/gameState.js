@@ -5,26 +5,65 @@ import {
   accessPosInDom,
   renderNewGameState,
   renderButton,
-  removeAndRow
+  removeAndRow,
+  renderMenuPlayMode,
+  renderNewGameMode,
+  renderConfirmDialog
 } from "./renderState";
 
 // --- GAME STATE SINGLETON objects -----
 export const gameState = {};
 export const liveTetrominoState = {};
+export const UIState = {
+  showGameMode: false,
+  confirmDialog: false
+};
 // -------------------------------------- //
 
-export function startGame(e) {
+export function confirm(action) {
+  UIState.confirmDialog = false;
+
+  renderConfirmDialog(UIState);
+  if (action === "yes") {
+    UIState.showGameMode = true;
+    renderMenuPlayMode(UIState);
+  } else {
+    gameState.running = true;
+    clockState();
+  }
+}
+
+export function upperBtn(e) {
+  e.target.blur();
+
+  if (gameState.running) {
+    UIState.confirmDialog = true;
+    gameState.running = false;
+    renderConfirmDialog(UIState);
+  } else {
+    UIState.showGameMode = true;
+    renderMenuPlayMode(UIState);
+  }
+}
+
+export function startGame(type) {
   gameState.running = gameState.play = true;
   gameState.gameover = false;
   gameState.level = 1;
+  UIState.showGameMode = false;
+  UIState.confirmDialog = false;
+  gameState.type = type;
   gameState.points = 0;
   gameState.lines = 0;
   gameState.nextTick = performance.now() + 1000;
   gameState.state = emptyState();
 
-  e.target.blur();
-  renderNewGameState(); // IU state
-  renderButton(); // IU state
+  renderNewGameState(gameState); // IU state
+  renderButton(gameState); // IU state
+  renderNewGameMode(gameState); // IU state
+  renderMenuPlayMode(UIState); // IU state
+  renderConfirmDialog(UIState);
+
   clearPlayingField(); // Dom manipulation
   clockState(); // timer init
   dropNewTetromino(); // drop ...
@@ -141,7 +180,7 @@ export function moveTetromino([difX, difY]) {
 
     gameState.level = Math.floor(gameState.lines / 10) + 1;
 
-    renderNewGameState();
+    renderNewGameState(gameState);
     dropNewTetromino();
   }
 
@@ -178,7 +217,7 @@ function needToOffSet(positions) {
 function gameover() {
   gameState.running = gameState.play = false;
   gameState.gameover = true;
-  renderNewGameState();
+  renderNewGameState(gameState);
 }
 
 function renderTetrominoMove(newPos, removeOld) {
@@ -195,7 +234,7 @@ function renderTetrominoMove(newPos, removeOld) {
 export function pauseGame() {
   // set time to next tick
   gameState.running = !gameState.running;
-  renderButton();
+  renderButton(gameState);
 
   if (gameState.running) {
     clockState();

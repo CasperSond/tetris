@@ -39,8 +39,12 @@ button {
   margin-top: 2em;
 }
 
-.rotateIt {
-  animation: rotate 45s linear infinite;
+.rotate {
+  animation: rotate 45s linear infinite alternate;
+}
+
+.roll {
+  animation: threeD 15s ease-in infinite alternate;
 }
 
 @keyframes rotate {
@@ -50,6 +54,16 @@ button {
 
   to {
     transform: rotate(360deg);
+  }
+}
+
+@keyframes threeD {
+  from {
+    transform: rotateX(0deg);
+  }
+
+  to {
+    transform: rotateX(360deg);
   }
 }
 
@@ -127,4 +141,35 @@ button {
   to {
     transform: translateY(100vh) translateX(150%);
   }
+}
+
+.choice {
+  position: absolute;
+  background: white;
+  top: 1em;
+  left: 1em;
+  width: 320px;
+  padding: 0.5em;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
+.choice label {
+  display: block;
+  font-size: 25px;
+  margin-bottom: 1.5em;
+}
+
+.choice button {
+  width: 100%;
+  margin-bottom: 0.5em;
+  background: #0e4d92;
+  color: white;
+  font-weight: 200;
+  transition: all 0.2s;
+}
+
+.choice button:hover {
+  cursor: pointer;
+  font-weight: 900;
 }

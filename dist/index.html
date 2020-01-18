@@ -14,19 +14,35 @@
     <div id="gameover" style="display: none">
       Game over
     </div>
-    <div class="center">
+    <div class="center" id="block">
       <div class="relative">
         <svg viewBox="0 0 100 100" class="circle">
           <circle cy="50" cx="50" r="50" fill="#0E4D92"></circle>
         </svg>
         
-          <button id="startGame" class="btn1">Start</button>
-          <button id="pauseGame" class="btn2" style="display: none;">Pause</button>
+        <button id="startGame" class="btn1">Start</button>
+        <button id="pauseGame" class="btn2" style="display: none;">Pause</button>
         
         <div class="score">
           <div>Points: <span id="points"></span></div>
           <div>Lines: <span id="lines"></span></div>
           <div>Level: <span id="level"></span></div>
+        </div>
+        <div id="choice" style="display: none;" class="choice"> 
+          <label for="">Game mode</label>
+
+          <button id="regular">Regular</button>
+          <button id="rotate">Rotating cirkus</button>
+          <button id="roll">3d cirkus</button>
+          
+        </div>
+        <div id="confirm" style="display: none;" class="choice">
+          <label for="">Restart game?</label>
+          <button id="yes">Yes</button>
+           <button id="no">No</button>
+
+
+
         </div>
         <div id="field"></div>
       </div>

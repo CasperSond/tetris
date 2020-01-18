@@ -282,8 +282,9 @@ exports.accessPosInDom = accessPosInDom;
 exports.renderNewGameState = renderNewGameState;
 exports.renderButton = renderButton;
 exports.removeAndRow = removeAndRow;
-
-var _gameState = require("./gameState");
+exports.renderMenuPlayMode = renderMenuPlayMode;
+exports.renderConfirmDialog = renderConfirmDialog;
+exports.renderNewGameMode = renderNewGameMode;
 
 function _slicedToArray(arr, i) { return _arrayWithHoles(arr) || _iterableToArrayLimit(arr, i) || _nonIterableRest(); }
 
@@ -300,6 +301,9 @@ var level = document.getElementById("level");
 var refButtonPause = document.getElementById("pauseGame");
 var startGameBtn = document.getElementById("startGame");
 var gameover = document.getElementById("gameover");
+var choice = document.getElementById("choice");
+var block = document.getElementById("block");
+var confirm = document.getElementById("confirm");
 
 function accessPosInDom(_ref, type) {
   var _ref2 = _slicedToArray(_ref, 2),
@@ -313,21 +317,21 @@ function accessPosInDom(_ref, type) {
     el.style.background = "black";
   } else {
     var colors = ["rgb(97,197,235)", "rgb(91, 102, 168)", "rgb(225, 127, 58)", "rgb(242, 211, 73)", "rgb(101, 179, 82)", "rgb(221, 58, 53)", "rgb(161, 84, 153)"];
-    el.style.background = colors[_gameState.liveTetrominoState.type];
+    el.style.background = colors[type];
   }
 }
 
-function renderNewGameState() {
-  points.innerText = _gameState.gameState.points;
-  lines.innerText = _gameState.gameState.lines;
-  level.innerText = _gameState.gameState.level;
-  var gs = _gameState.gameState.gameover ? "block" : "none";
+function renderNewGameState(gameState) {
+  points.innerText = gameState.points;
+  lines.innerText = gameState.lines;
+  level.innerText = gameState.level;
+  var gs = gameState.gameover ? "block" : "none";
   gameover.style.display = gs;
 }
 
-function renderButton() {
-  if (_gameState.gameState.play) {
-    var text = _gameState.gameState.running ? "pause" : "resume";
+function renderButton(gameState) {
+  if (gameState.play) {
+    var text = gameState.running ? "pause" : "resume";
     refButtonPause.innerText = text;
     refButtonPause.style.display = "block";
     startGameBtn.innerText = "restart";
@@ -349,20 +353,37 @@ function removeAndRow(index) {
   field.prepend(rowElement);
 }
 
-window.addEventListener("DOMContentLoaded", function () {// renderNewGameState();
-});
-},{"./gameState":"src/js/gameState.js"}],"src/js/gameState.js":[function(require,module,exports) {
+function renderMenuPlayMode(UIState) {
+  var mode = UIState.showGameMode ? "block" : "none";
+  choice.style.display = mode;
+}
+
+function renderConfirmDialog(UIState) {
+  var mode = UIState.confirmDialog ? "block" : "none";
+  confirm.style.display = mode;
+}
+
+function renderNewGameMode(gameState) {
+  block.classList.remove("rotate", "roll");
+
+  if (gameState.type !== "regular") {
+    block.classList.add(gameState.type);
+  }
+}
+},{}],"src/js/gameState.js":[function(require,module,exports) {
 "use strict";
 
 Object.defineProperty(exports, "__esModule", {
   value: true
 });
+exports.confirm = confirm;
+exports.upperBtn = upperBtn;
 exports.startGame = startGame;
 exports.rotateTetromino = rotateTetromino;
 exports.dropNewTetromino = dropNewTetromino;
 exports.moveTetromino = moveTetromino;
 exports.pauseGame = pauseGame;
-exports.liveTetrominoState = exports.gameState = void 0;
+exports.UIState = exports.liveTetrominoState = exports.gameState = void 0;
 
 var _helpers = require("./helpers");
 
@@ -391,23 +412,61 @@ function _defineProperty(obj, key, value) { if (key in obj) { Object.definePrope
 // --- GAME STATE SINGLETON objects -----
 var gameState = {};
 exports.gameState = gameState;
-var liveTetrominoState = {}; // -------------------------------------- //
-
+var liveTetrominoState = {};
 exports.liveTetrominoState = liveTetrominoState;
+var UIState = {
+  showGameMode: false,
+  confirmDialog: false
+}; // -------------------------------------- //
 
-function startGame(e) {
+exports.UIState = UIState;
+
+function confirm(action) {
+  UIState.confirmDialog = false;
+  (0, _renderState.renderConfirmDialog)(UIState);
+
+  if (action === "yes") {
+    UIState.showGameMode = true;
+    (0, _renderState.renderMenuPlayMode)(UIState);
+  } else {
+    gameState.running = true;
+    clockState();
+  }
+}
+
+function upperBtn(e) {
+  e.target.blur();
+
+  if (gameState.running) {
+    UIState.confirmDialog = true;
+    gameState.running = false;
+    (0, _renderState.renderConfirmDialog)(UIState);
+  } else {
+    UIState.showGameMode = true;
+    (0, _renderState.renderMenuPlayMode)(UIState);
+  }
+}
+
+function startGame(type) {
   gameState.running = gameState.play = true;
   gameState.gameover = false;
   gameState.level = 1;
+  UIState.showGameMode = false;
+  UIState.confirmDialog = false;
+  gameState.type = type;
   gameState.points = 0;
   gameState.lines = 0;
   gameState.nextTick = performance.now() + 1000;
   gameState.state = emptyState();
-  e.target.blur();
-  (0, _renderState.renderNewGameState)(); // IU state
+  (0, _renderState.renderNewGameState)(gameState); // IU state
 
-  (0, _renderState.renderButton)(); // IU state
+  (0, _renderState.renderButton)(gameState); // IU state
 
+  (0, _renderState.renderNewGameMode)(gameState); // IU state
+
+  (0, _renderState.renderMenuPlayMode)(UIState); // IU state
+
+  (0, _renderState.renderConfirmDialog)(UIState);
   (0, _createPlayingField.default)(); // Dom manipulation
 
   clockState(); // timer init
@@ -527,7 +586,7 @@ function moveTetromino(_ref3) {
     }
 
     gameState.level = Math.floor(gameState.lines / 10) + 1;
-    (0, _renderState.renderNewGameState)();
+    (0, _renderState.renderNewGameState)(gameState);
     dropNewTetromino();
   }
 
@@ -571,7 +630,7 @@ function needToOffSet(positions) {
 function gameover() {
   gameState.running = gameState.play = false;
   gameState.gameover = true;
-  (0, _renderState.renderNewGameState)();
+  (0, _renderState.renderNewGameState)(gameState);
 }
 
 function renderTetrominoMove(newPos, removeOld) {
@@ -589,7 +648,7 @@ function renderTetrominoMove(newPos, removeOld) {
 function pauseGame() {
   // set time to next tick
   gameState.running = !gameState.running;
-  (0, _renderState.renderButton)();
+  (0, _renderState.renderButton)(gameState);
 
   if (gameState.running) {
     clockState();
@@ -665,7 +724,17 @@ function initEventHandlers() {
   });
   var start = document.getElementById("startGame");
   var pause = document.getElementById("pauseGame");
-  start.addEventListener("click", _gameState.startGame);
+  var choices = document.getElementById("choice");
+  var confirmdialog = document.getElementById("confirm");
+  choices.addEventListener("click", function (e) {
+    var id = e.target.id;
+    (0, _gameState.startGame)(id);
+  });
+  confirmdialog.addEventListener("click", function (e) {
+    var id = e.target.id;
+    (0, _gameState.confirm)(id);
+  });
+  start.addEventListener("click", _gameState.upperBtn);
   pause.addEventListener("click", _gameState.pauseGame);
 }
 },{"./gameState":"src/js/gameState.js"}],"src/js/main.js":[function(require,module,exports) {

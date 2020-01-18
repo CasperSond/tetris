@@ -2,7 +2,9 @@ import {
   startGame,
   pauseGame,
   moveTetromino,
-  rotateTetromino
+  rotateTetromino,
+  upperBtn,
+  confirm
 } from "./gameState";
 
 export function initEventHandlers() {
@@ -19,7 +21,19 @@ export function initEventHandlers() {
 
   const start = document.getElementById("startGame");
   const pause = document.getElementById("pauseGame");
+  const choices = document.getElementById("choice");
+  const confirmdialog = document.getElementById("confirm");
 
-  start.addEventListener("click", startGame);
+  choices.addEventListener("click", e => {
+    const id = e.target.id;
+    startGame(id);
+  });
+
+  confirmdialog.addEventListener("click", e => {
+    const id = e.target.id;
+    confirm(id);
+  });
+
+  start.addEventListener("click", upperBtn);
   pause.addEventListener("click", pauseGame);
 }

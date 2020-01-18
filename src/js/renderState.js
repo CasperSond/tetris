@@ -1,5 +1,3 @@
-import { liveTetrominoState, gameState } from "./gameState";
-
 const field = document.getElementById("field");
 const points = document.getElementById("points");
 const lines = document.getElementById("lines");
@@ -7,6 +5,9 @@ const level = document.getElementById("level");
 const refButtonPause = document.getElementById("pauseGame");
 const startGameBtn = document.getElementById("startGame");
 const gameover = document.getElementById("gameover");
+const choice = document.getElementById("choice");
+const block = document.getElementById("block");
+const confirm = document.getElementById("confirm");
 
 export function accessPosInDom([x, y], type) {
   const row = field.children.item(y);
@@ -24,11 +25,11 @@ export function accessPosInDom([x, y], type) {
       "rgb(221, 58, 53)",
       "rgb(161, 84, 153)"
     ];
-    el.style.background = colors[liveTetrominoState.type];
+    el.style.background = colors[type];
   }
 }
 
-export function renderNewGameState() {
+export function renderNewGameState(gameState) {
   points.innerText = gameState.points;
   lines.innerText = gameState.lines;
   level.innerText = gameState.level;
@@ -38,7 +39,7 @@ export function renderNewGameState() {
   gameover.style.display = gs;
 }
 
-export function renderButton() {
+export function renderButton(gameState) {
   if (gameState.play) {
     const text = gameState.running ? "pause" : "resume";
     refButtonPause.innerText = text;
@@ -61,6 +62,21 @@ export function removeAndRow(index) {
   field.prepend(rowElement);
 }
 
-window.addEventListener("DOMContentLoaded", () => {
-  // renderNewGameState();
-});
+export function renderMenuPlayMode(UIState) {
+  const mode = UIState.showGameMode ? "block" : "none";
+  choice.style.display = mode;
+}
+
+export function renderConfirmDialog(UIState) {
+  const mode = UIState.confirmDialog ? "block" : "none";
+
+  confirm.style.display = mode;
+}
+
+export function renderNewGameMode(gameState) {
+  block.classList.remove("rotate", "roll");
+
+  if (gameState.type !== "regular") {
+    block.classList.add(gameState.type);
+  }
+}
