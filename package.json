@@ -12,7 +12,7 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "mocha": "^6.2.2"
+    "mocha": "^10.2.0"
   },
   "devDependencies": {
     "cssnano": "^4.1.10",
